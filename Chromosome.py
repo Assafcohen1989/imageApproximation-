@@ -14,6 +14,9 @@ class Chromosome(object):
         self._img = image
         self._id = randrange(10000)
 
+    def __repr__(self):
+        return "Chromosome id: {0}, {1} genes.".format(self._id, self.get_size())
+
     def generate(self, num_of_genes=3):
         if self._genes is None:
             raise Exception("Chromosome already holds genes!.")
@@ -24,32 +27,40 @@ class Chromosome(object):
             self._genes.append(Gene().generate(self._img.shape[:2]))
         return self
 
+    def get_gene_pool(self):
+        return self._genes
+
     def set_genes_from_list(self, gene_list):
         if gene_list is not None and len(gene_list) > 0:
             self._genes = gene_list
         else:
             raise Exception("Passed gene_list param is empty or None.")
 
-    def add_random_gene(self):
+    def add_random_gene(self, parents=None):
         if self.get_size() < self._genes_limit:
-            self._genes.append(Gene().generate(self._img.shape[:2]))
+            if parents is None:
+                self._genes.append(Gene().generate(self._img.shape[:2]))
+            else:
+                new_gene = sample(parents[0].get_random_genes(num_of_genes=1) + parents[1].get_random_genes(num_of_genes=1), k=1)
+                while new_gene in self._genes:
+                    new_gene = sample(parents[0].get_random_genes(num_of_genes=1) + parents[1].get_random_genes(num_of_genes=1), k=1)
+                self._genes.append(new_gene[0])
 
     def get_fitness(self):
         """
         This function calculates the MSE ('Mean Squared Error') between the  original image
         and the one the chromosome generates.
         The lower the score -> the lower the error -> higher similarity.
-        :return:
+        :return: Mean Squared Error between the evaluated picture and the chromosome generated picture.
         """
         chromosome_img = self.generate_chromosome_image()
         fitness = np.sum((chromosome_img.astype("float") - self._img.astype("float")) ** 2)
         fitness /= float(chromosome_img.shape[0] * chromosome_img.shape[1])
         return fitness
-    '''
-    Need to calculate the current chromosome's similarity to the original picture
-    '''
 
     def get_random_genes(self, num_of_genes=1):
+        if num_of_genes == 0:
+            return []
         return sample(self._genes, k=num_of_genes)
 
     def get_size(self):
@@ -65,7 +76,7 @@ class Chromosome(object):
         img = self.generate_chromosome_image()
         # Show the results
         cv2.imshow('gene', img)
-        cv2.waitKey(0)
+        cv2.waitKey(500)
         cv2.destroyAllWindows()
-
         return img
+
