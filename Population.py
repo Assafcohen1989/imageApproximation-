@@ -18,6 +18,7 @@ class Population(object):
         self._chromosomes = chromosome_list
         self._size_limit = population_size_limit
         self._img = image
+        self.__last_parents = []
 
     def __repr__(self):
         pop = "Population: "
@@ -73,17 +74,22 @@ class Population(object):
 
         return offsprings
 
-    def _mutate(self, chromosomes=None, p_grow=0.5, p_chromosomes_to_change=0.2):
+    def _mutate(self, chromosomes=None, p_grow=0.5, p_chromosomes_to_change=0.2, divergence=False):
         if chromosomes is None:
             raise Exception("Nothing to mutate.\nNo chromosomes were given.")
 
         # random number of chromosomes to mutate
-        #chromosomes_to_mutate = sample(chromosomes[2:], k=randrange(len(chromosomes) - 1))
         chromosomes_to_mutate = sample(chromosomes[2:], k=int((len(chromosomes) - 2) * p_chromosomes_to_change))
         for chromosome in chromosomes_to_mutate:
-            if uniform(0, 1) <= p_grow:
-                #chromosome.add_random_gene(chromosomes[:2])
-                chromosome.add_random_gene()
+            chance_to_grow = uniform(0, 1)
+            if chance_to_grow <= p_grow:
+                chance = uniform(0, 1)
+                if 0 < chance <= 0.33:
+                    chromosome.add_random_gene()  # Adding a completely random gene
+                elif 0.33 < chance <= 0.66:
+                    chromosome.add_random_gene(chromosomes[:2])  # Adding a random non existing gene from one of the parents
+                else:
+                    chromosome.add_random_gene(chromosome)  # Duplicating a present gene which wil probably mutate
 
             # random number of genes to mutate
             else:
@@ -94,18 +100,26 @@ class Population(object):
                     genes_to_mutate = chromosome.get_random_genes(num_of_genes=randrange(1, chromosome_size))
 
                 for gene in genes_to_mutate:
-                    gene.mutate(num_of_mutations=1, step=0.30)
+                    if divergence:
+                        gene.mutate(num_of_mutations=randrange(2), step=0.3)
+                    else:
+                        gene.mutate(num_of_mutations=1, step=0.2)
 
     def breed(self, time_limit_in_minuets=5):
         start_time = time.time()
         i = 0
+        last_parents = self._selection()
         while True:
             parents = self._selection()
-            if i % 50 == 0:
+            if i % 10 == 0:
                 parents[0]['chromosome'].draw_chromosome(use_opacity=True)
             print("Iteration: {0}".format(i))
+            divergence_flag = False
+            if parents == last_parents:
+                divergence_flag = True
+
             offsprings = self._crossover(parents=[p['chromosome'] for p in parents], number_of_offsprings=30, p_grow=0.5)
-            self._mutate(offsprings, p_grow=0.5, p_chromosomes_to_change=0.3)
+            self._mutate(offsprings, p_grow=0.5, p_chromosomes_to_change=0.4, divergence=divergence_flag)
             self._chromosomes = [{'chromosome': offspring, 'score': 0} for offspring in offsprings]
             i += 1
             end_time = time.time()
@@ -118,19 +132,26 @@ class Population(object):
 def get_args():
     parser = ArgumentParser()
     parser.add_argument("--pic", required=True, help="--pic - path to the requested picture file.")
+    parser.add_argument("--timeout", required=False, default=5, help="--timeout - Limit time for running in minuets.")
     args = parser.parse_args()
     return args
 
 
 def main():
+    print("Initializing Image approximation using Genetic Algorithm")
     file_path = get_args().pic
     if not os.path.isfile(file_path):
         raise FileExistsError("Could not find requested file.")
     img = cv2.imread(file_path)
+    print("Loaded image successfully.")
     pop = Population([], 10, img)
     pop.create_population()
-    result = pop.breed(time_limit_in_minuets=5)
-    result.draw_chromosome(use_opacity=True)
+    print("Initial population initialized.")
+    timeout = get_args().timeout
+    print("Starting breeding with time limit of {0} minuets.".format(timeout))
+    result = pop.breed(time_limit_in_minuets=int(timeout))
+    print("Displaying final result.")
+    result.draw_chromosome(use_opacity=True, hold=True)
 
 
 if __name__ == '__main__':

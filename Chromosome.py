@@ -4,7 +4,6 @@ import numpy as np
 import cv2
 
 
-
 class Chromosome(object):
     def __init__(self, genes=[], genes_limit=100, image=None):
         if image is None:
@@ -16,6 +15,9 @@ class Chromosome(object):
 
     def __repr__(self):
         return "Chromosome id: {0}, {1} genes.".format(self._id, self.get_size())
+
+    def __len__(self):
+        return 1
 
     def generate(self, num_of_genes=5):
         if self._genes is None:
@@ -41,6 +43,9 @@ class Chromosome(object):
         if self.get_size() < self._genes_limit:
             if parents is None:
                 self._genes.append(Gene().generate(self._img.shape[:2]))
+            elif len(parents) == 1:
+                gene = self.get_random_genes(num_of_genes=1)
+                self._genes.append(gene[0].copy())
             else:
                 new_gene = sample(parents[0].get_random_genes(num_of_genes=1) + parents[1].get_random_genes(num_of_genes=1), k=1)
                 while new_gene in self._genes:
@@ -70,14 +75,19 @@ class Chromosome(object):
     def generate_chromosome_image(self, use_opacity=True):
         img = np.zeros((self._img.shape[:2][0], self._img.shape[:2][1], 3), np.uint8)
         for gene in self._genes:
+            if type(gene) == list:
+                print("STOP")
             gene.draw_gene(img, use_opacity=use_opacity)
         return img
 
-    def draw_chromosome(self, use_opacity=True):
+    def draw_chromosome(self, use_opacity=True, hold=False):
         img = self.generate_chromosome_image(use_opacity=use_opacity)
         # Show the results
         cv2.imshow('gene', img)
-        cv2.waitKey(850)
+        if hold:
+            cv2.waitKey(0)
+        else:
+            cv2.waitKey(1000)
         cv2.destroyAllWindows()
         return img
 
