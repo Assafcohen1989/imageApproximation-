@@ -77,7 +77,7 @@ class Chromosome(object):
         img = self.generate_chromosome_image(use_opacity=use_opacity)
         # Show the results
         cv2.imshow('gene', img)
-        cv2.waitKey(1000)
+        cv2.waitKey(850)
         cv2.destroyAllWindows()
         return img
 

@@ -29,20 +29,28 @@ class Gene(object):
     def draw_gene(self, _img=None, use_opacity=True):
         if _img is None:
             _img = np.zeros((self._frame_limit[0], self._frame_limit[1], 3), np.uint8)
-        cv2.circle(img=_img,
-                   center=(self._x, self._y),
-                   radius=self._radius,
-                   color=self._color,
-                   thickness=-1
-                   )
-        if use_opacity == True:
+
+        if not use_opacity:
+            cv2.circle(img=_img,
+                       center=(self._x, self._y),
+                       radius=self._radius,
+                       color=self._color,
+                       thickness=-1
+                       )
+        else:  # use_opacity = True
             overlay = np.zeros((self._frame_limit[0], self._frame_limit[1], 3), np.uint8)
-            if self._opacity != 100:
-                opacity = self._opacity/100
-                cv2.addWeighted(overlay, opacity, _img, 1 - opacity, 0, _img)
-        show_waited=True
+            cv2.circle(img=overlay,
+                       center=(self._x, self._y),
+                       radius=self._radius,
+                       color=self._color,
+                       thickness=-1
+                       )
+            opacity = self._opacity/100
+            cv2.addWeighted(_img, 1, overlay, opacity, 0, _img)
+
+        show_waited = False
         if show_waited:
-        # Show the results
+            # Show the results
             cv2.imshow('gene', _img)
             cv2.waitKey(0)
             cv2.destroyAllWindows()

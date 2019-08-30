@@ -1,7 +1,10 @@
 import cv2
 import os
+import time
 from argparse import ArgumentParser
 from random import randrange, sample, uniform
+import signal
+from contextlib import contextmanager
 
 from Chromosome import Chromosome
 
@@ -93,19 +96,23 @@ class Population(object):
                 for gene in genes_to_mutate:
                     gene.mutate(num_of_mutations=1, step=0.30)
 
-    def breed(self, n=1000):
+    def breed(self, time_limit_in_minuets=5):
+        start_time = time.time()
         i = 0
-        while i < n:
+        while True:
             parents = self._selection()
-            # if i % 50 == 0:
-            parents[0]['chromosome'].draw_chromosome(use_opacity=True)
+            if i % 50 == 0:
+                parents[0]['chromosome'].draw_chromosome(use_opacity=True)
             print("Iteration: {0}".format(i))
-            offsprings = self._crossover(parents=[p['chromosome'] for p in parents], number_of_offsprings=20, p_grow=0.5)
-            self._mutate(offsprings, p_grow=0.5, p_chromosomes_to_change=0.2)
+            offsprings = self._crossover(parents=[p['chromosome'] for p in parents], number_of_offsprings=30, p_grow=0.5)
+            self._mutate(offsprings, p_grow=0.5, p_chromosomes_to_change=0.3)
             self._chromosomes = [{'chromosome': offspring, 'score': 0} for offspring in offsprings]
             i += 1
-
-        # return Population(chromosome_list=offsprings)
+            end_time = time.time()
+            if end_time - start_time > time_limit_in_minuets * 60:
+                print("Reached time limit of {0} minuets.".format(time_limit_in_minuets))
+                break
+        return parents[0]['chromosome']
 
 
 def get_args():
@@ -122,8 +129,8 @@ def main():
     img = cv2.imread(file_path)
     pop = Population([], 10, img)
     pop.create_population()
-
-    pop.breed(n=2000)
+    result = pop.breed(time_limit_in_minuets=5)
+    result.draw_chromosome(use_opacity=True)
 
 
 if __name__ == '__main__':
