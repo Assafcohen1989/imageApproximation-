@@ -75,7 +75,7 @@ class Population(object):
 
         return offsprings
 
-    def _mutate(self, chromosomes=None, p_grow=0.5, p_chromosomes_to_change=0.2, divergence=False):
+    def _mutate(self, chromosomes=None, p_chromosomes_to_change=0.2, divergence=False):
         if chromosomes is None:
             chromosomes = self._chromosomes
 
@@ -85,23 +85,19 @@ class Population(object):
         for chromosome in chromosomes_to_mutate:
 
             # Growing step:
-            if chromosome.get_size() < chromosome.get_limit():
-                chance_to_grow = 1
-            else:
-                chance_to_grow = uniform(0, 1)
-
-            if chance_to_grow >= p_grow:  # chromosome is growing
+            if chromosome.get_size() < chromosome.get_limit():  # chromosome is growing
                 chance = uniform(0, 1)
 
-                if 0 < chance <= 0.5:
-                    chromosome.add_random_gene()  # Adding a completely random gene
+                if 0 < chance <= 0.5:  # Adding a completely random gene
+                    chromosome.add_random_gene()
                     if divergence:  # No improvement was made in the previous generation so a larger change is given
                         chromosome.add_random_gene()  # Adding a completely random gene
 
-                elif 0.5 < chance <= 0.8:
-                    chromosome.add_random_gene(chromosomes[:2])  # Adding a random non existing gene from one of the parents
-                else:
-                    chromosome.add_random_gene(chromosome)  # Duplicating a present gene which will probably mutate
+                elif 0.5 < chance <= 0.8:  # Adding a random non existing gene from one of the parents
+                    chromosome.add_random_gene(chromosomes[:2])
+
+                else:  # Duplicating an existing gene which will probably mutate
+                    chromosome.add_random_gene(chromosome)
 
             # Mutation step:
             chromosome_size = chromosome.get_size()  # random number of genes to mutate
@@ -141,7 +137,7 @@ class Population(object):
             offsprings = self._crossover(parents=[p['chromosome'] for p in parents], number_of_offsprings=number_of_offsprings_for_each_generation, p_grow=chance_to_grow_for_each_offspring)
 
             # Insert mutations to the offsprings:
-            self._mutate(offsprings, p_grow=chance_to_grow_for_each_offspring, p_chromosomes_to_change=percentage_of_chromosomes_to_change, divergence=divergence_flag)
+            self._mutate(offsprings, p_chromosomes_to_change=percentage_of_chromosomes_to_change, divergence=divergence_flag)
 
             # Create a new generation:
             self._chromosomes = [{'chromosome': offspring, 'score': 0} for offspring in offsprings]
