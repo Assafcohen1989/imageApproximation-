@@ -1,3 +1,4 @@
+from datetime import datetime
 import cv2
 import os
 import time
@@ -76,59 +77,81 @@ class Population(object):
 
     def _mutate(self, chromosomes=None, p_grow=0.5, p_chromosomes_to_change=0.2, divergence=False):
         if chromosomes is None:
-            raise Exception("Nothing to mutate.\nNo chromosomes were given.")
+            chromosomes = self._chromosomes
 
-        # random number of chromosomes to mutate
+        # Choosing a random number of chromosomes to mutate (excluding the parents)
         chromosomes_to_mutate = sample(chromosomes[2:], k=int((len(chromosomes) - 2) * p_chromosomes_to_change))
+
         for chromosome in chromosomes_to_mutate:
-            chance_to_grow = uniform(0, 1)
-            if chance_to_grow <= p_grow:
+
+            # Growing step:
+            if chromosome.get_size() < chromosome.get_limit():
+                chance_to_grow = 1
+            else:
+                chance_to_grow = uniform(0, 1)
+
+            if chance_to_grow >= p_grow:  # chromosome is growing
                 chance = uniform(0, 1)
+
                 if 0 < chance <= 0.5:
                     chromosome.add_random_gene()  # Adding a completely random gene
-                    if divergence:
+                    if divergence:  # No improvement was made in the previous generation so a larger change is given
                         chromosome.add_random_gene()  # Adding a completely random gene
 
                 elif 0.5 < chance <= 0.8:
                     chromosome.add_random_gene(chromosomes[:2])  # Adding a random non existing gene from one of the parents
                 else:
-                    chromosome.add_random_gene(chromosome)  # Duplicating a present gene which wil probably mutate
+                    chromosome.add_random_gene(chromosome)  # Duplicating a present gene which will probably mutate
 
-            # random number of genes to mutate
+            # Mutation step:
+            chromosome_size = chromosome.get_size()  # random number of genes to mutate
+            # pick at random the genes which will mutate
+            if chromosome_size == 1:
+                genes_to_mutate = chromosome.get_random_genes(num_of_genes=1)
             else:
-                chromosome_size = chromosome.get_size()
-                if chromosome_size == 1:
-                    genes_to_mutate = chromosome.get_random_genes(num_of_genes=1)
-                else:
-                    genes_to_mutate = chromosome.get_random_genes(num_of_genes=randrange(1, chromosome_size))
+                genes_to_mutate = chromosome.get_random_genes(num_of_genes=randrange(1, chromosome_size))
 
-                for gene in genes_to_mutate:
-                    if divergence:
-                        gene.mutate(num_of_mutations=randrange(2), step=0.3)
-                    else:
-                        gene.mutate(num_of_mutations=1, step=0.2)
+            # Mutate the selected genes
+            for gene in genes_to_mutate:
+                if divergence:  # No improvement was made in the previous generation so a stronger mutation is tried
+                    gene.mutate(num_of_mutations=randrange(1, 2), step=0.5)
+                else:
+                    gene.mutate(num_of_mutations=1, step=0.35)
 
     def breed(self, time_limit_in_minuets=5):
+        percentage_of_chromosomes_to_change = 0.65
+        chance_to_grow_for_each_offspring = 0.5
+        number_of_offsprings_for_each_generation = 30
+
         start_time = time.time()
-        i = 0
         last_parents = self._selection()
+        generation_counter = 0
         while True:
             parents = self._selection()
-            if i % 10 == 0:
+
+            if generation_counter % 10 == 0:
                 parents[0]['chromosome'].draw_chromosome(use_opacity=True)
-            print("Iteration: {0}".format(i))
+            print("Iteration: {0}".format(generation_counter))
+
             divergence_flag = False
             if parents == last_parents:
                 divergence_flag = True
 
-            offsprings = self._crossover(parents=[p['chromosome'] for p in parents], number_of_offsprings=30, p_grow=0.5)
-            self._mutate(offsprings, p_grow=0.5, p_chromosomes_to_change=0.4, divergence=divergence_flag)
+            # Create offsprings:
+            offsprings = self._crossover(parents=[p['chromosome'] for p in parents], number_of_offsprings=number_of_offsprings_for_each_generation, p_grow=chance_to_grow_for_each_offspring)
+
+            # Insert mutations to the offsprings:
+            self._mutate(offsprings, p_grow=chance_to_grow_for_each_offspring, p_chromosomes_to_change=percentage_of_chromosomes_to_change, divergence=divergence_flag)
+
+            # Create a new generation:
             self._chromosomes = [{'chromosome': offspring, 'score': 0} for offspring in offsprings]
-            i += 1
+            generation_counter += 1
+
             end_time = time.time()
             if end_time - start_time > time_limit_in_minuets * 60:
                 print("Reached time limit of {0} minuets.".format(time_limit_in_minuets))
                 break
+
         return parents[0]['chromosome']
 
 
@@ -154,7 +177,12 @@ def main():
     print("Starting breeding with time limit of {0} minuets.".format(timeout))
     result = pop.breed(time_limit_in_minuets=int(timeout))
     print("Displaying final result.")
-    result.draw_chromosome(use_opacity=True, hold=True)
+    img = result.draw_chromosome(use_opacity=True, hold=True)
+    now = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
+    if not os.path.exists("./Results"):
+        os.makedirs("./Results")
+    cv2.imwrite("./Results/result_" + now + ".jpg", img)
+    print("Result image was saved to {0}.".format("./Results/result_" + now + ".jpg"))
 
 
 if __name__ == '__main__':

@@ -18,11 +18,11 @@ class Gene(object):
     def generate(self, frame_limit=(0, 0)):
         if self._frame_limit == (0, 0):
             self._frame_limit = frame_limit
-        self._radius = randrange(int((min(*self._frame_limit))/4))
+        self._radius = randrange(int((max(*self._frame_limit))/5))
         self._x = randrange(self._frame_limit[0])
         self._y = randrange(self._frame_limit[1])
         self._color = (randrange(255), randrange(255), randrange(255))
-        self._opacity = randrange(100)
+        self._opacity = randrange(50)
         return self
 
     def draw_gene(self, _img=None, use_opacity=True):
@@ -63,32 +63,37 @@ class Gene(object):
                                    p=[p_radius, p_x, p_y, p_color, p_opacity])
         change = uniform(-step, step)
         for choice in choices:
+            for _ in range(5):  # 5 chances are give to mutate in the 'legal' range, otherwise mutation is skipped
+                if choice == 'radius':
+                    new_r = int(self._radius*change)
+                    if 0 <= self._radius + new_r <= min(self._frame_limit[0], self._frame_limit[1]):
+                        self._radius += int(self._radius*change)
+                        break
 
-            if choice == 'radius':
-                new_r = int(self._radius*change)
-                if 0 <= self._radius + new_r <= min(self._frame_limit[0], self._frame_limit[1]):
-                    self._radius += int(self._radius*change)
+                elif choice == 'x':
+                    new_x = int(self._x*change)
+                    if 0 <= self._x + new_x <= self._frame_limit[0]:
+                        self._x += new_x
+                        break
 
-            elif choice == 'x':
-                new_x = int(self._x*change)
-                if 0 <= self._x + new_x <= self._frame_limit[0]:
-                    self._x += new_x
+                elif choice == 'y':
+                    new_y = int(self._y * change)
+                    if 0 <= self._y + new_y <= self._frame_limit[1]:
+                        self._y += new_y
+                        break
 
-            elif choice == 'y':
-                new_y = int(self._y * change)
-                if 0 <= self._y + new_y <= self._frame_limit[1]:
-                    self._y += new_y
+                elif choice == 'color':
+                    channel = randrange(3)
+                    new_color = int(self._color[channel]*change)
+                    if 0 <= new_color <= 255:
+                        loc = list(self._color)
+                        loc[channel] = new_color
+                        self._color = tuple(loc)
+                        break
 
-            elif choice == 'color':
-                channel = randrange(3)
-                new_color = int(self._color[channel]*change)
-                if 0 <= new_color <= 255:
-                    loc = list(self._color)
-                    loc[channel] = new_color
-                    self._color = tuple(loc)
-
-            else:
-                new_opacity = int(self._opacity*change)
-                if 0 <= self._opacity + new_opacity <= 100:
-                    self._opacity += new_opacity
+                else:
+                    new_opacity = int(self._opacity*change)
+                    if 0 <= self._opacity + new_opacity <= 100:
+                        self._opacity += new_opacity
+                        break
 

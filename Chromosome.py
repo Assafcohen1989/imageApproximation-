@@ -19,6 +19,9 @@ class Chromosome(object):
     def __len__(self):
         return 1
 
+    def get_limit(self):
+        return self._genes_limit
+
     def generate(self, num_of_genes=5):
         if self._genes is None:
             raise Exception("Chromosome already holds genes!.")
