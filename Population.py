@@ -84,9 +84,12 @@ class Population(object):
             chance_to_grow = uniform(0, 1)
             if chance_to_grow <= p_grow:
                 chance = uniform(0, 1)
-                if 0 < chance <= 0.33:
+                if 0 < chance <= 0.5:
                     chromosome.add_random_gene()  # Adding a completely random gene
-                elif 0.33 < chance <= 0.66:
+                    if divergence:
+                        chromosome.add_random_gene()  # Adding a completely random gene
+
+                elif 0.5 < chance <= 0.8:
                     chromosome.add_random_gene(chromosomes[:2])  # Adding a random non existing gene from one of the parents
                 else:
                     chromosome.add_random_gene(chromosome)  # Duplicating a present gene which wil probably mutate

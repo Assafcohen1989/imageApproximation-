@@ -15,12 +15,11 @@ class Gene(object):
     def __repr__(self):
         return "center: ({0},{1}), radius: {2}, color: {3}, opacity: {4}%".format(self._x, self._y, self._radius, self._color, self._opacity)
 
-    def generate(self, frame_limit=(0, 0), rgb=True):
+    def generate(self, frame_limit=(0, 0)):
         if self._frame_limit == (0, 0):
             self._frame_limit = frame_limit
-
-        self._radius = randrange(int((min(*self._frame_limit))/2))
-        self._x = randrange(self._frame_limit[0]/2)
+        self._radius = randrange(int((min(*self._frame_limit))/4))
+        self._x = randrange(self._frame_limit[0])
         self._y = randrange(self._frame_limit[1])
         self._color = (randrange(255), randrange(255), randrange(255))
         self._opacity = randrange(100)
@@ -58,7 +57,7 @@ class Gene(object):
     def copy(self):
         return Gene((self._x, self._y), self._radius, self._color, self._opacity, self._frame_limit)
 
-    def mutate(self, num_of_mutations=1, step=0.15, p_radius=0.2, p_x=0.25, p_y=0.25, p_color=0.2, p_opacity=0.1):
+    def mutate(self, num_of_mutations=1, step=0.15, p_radius=0.15, p_x=0.3, p_y=0.3, p_color=0.15, p_opacity=0.1):
         choices = np.random.choice(['radius', 'x', 'y', 'color', 'opacity'],
                                    num_of_mutations,
                                    p=[p_radius, p_x, p_y, p_color, p_opacity])
