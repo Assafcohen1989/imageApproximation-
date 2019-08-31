@@ -85,9 +85,10 @@ class Population(object):
             # Growing step:
             if chromosome.get_size() < chromosome.get_limit():  # chromosome is growing
                 chromosome.add_random_gene()
+
+                '''
                 #chance = uniform(0, 1)
                 chance = -1
-
                 if 0 <= chance <= 0.5:  # Adding a completely random gene
                     chromosome.add_random_gene()
                     if divergence:  # No improvement was made in the previous generation so a larger change is given
@@ -98,6 +99,7 @@ class Population(object):
 
                 else:  # Duplicating an existing gene which will probably mutate
                     chromosome.add_random_gene(chromosome)
+            '''
 
             # Mutation step:
             chromosome_size = chromosome.get_size()  # random number of genes to mutate
@@ -110,14 +112,14 @@ class Population(object):
             # Mutate the selected genes
             for gene in genes_to_mutate:
                 if divergence:  # No improvement was made in the previous generation so a stronger mutation is tried
-                    gene.mutate(num_of_mutations=randrange(2, 6), step=0.8)
+                    gene.mutate(num_of_mutations=randrange(2, 6), step=0.75)
                 else:
                     gene.mutate(num_of_mutations=2, step=0.5)
 
     def breed(self, time_limit_in_minuets=5):
         percentage_of_chromosomes_to_change = 0.65
         chance_to_grow_for_each_offspring = 0.5
-        number_of_offsprings_for_each_generation = 30
+        number_of_offsprings_for_each_generation = 100
 
         start_time = time.time()
         last_parents = self._selection()
@@ -178,7 +180,7 @@ def main():
     if not os.path.exists("./Results"):
         os.makedirs("./Results")
     cv2.imwrite("./Results/result_" + now + "_" + str(timeout) + "min.jpg", img)
-    print("Result image was saved to {0}.".format("./Results/result_" + now + ".jpg"))
+    print("Result image was saved to {0}.".format("./Results/result_" + now + "_" + str(timeout) + "min.jpg"))
 
 
 if __name__ == '__main__':

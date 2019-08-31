@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-from random import randrange, random, uniform
+from random import randrange, uniform
 
 
 class Gene(object):
@@ -22,7 +22,7 @@ class Gene(object):
         self._x = randrange(self._frame_limit[0])
         self._y = randrange(self._frame_limit[1])
         self._color = (randrange(255), randrange(255), randrange(255))
-        self._opacity = randrange(50)
+        self._opacity = randrange(10, 50)
         return self
 
     def draw_gene(self, _img=None, use_opacity=True):
@@ -102,6 +102,7 @@ class Gene(object):
                     self._color = tuple(loc)
                 break
 
+            # choice == Opacity
             else:
                 change = uniform(-step, step)
                 new_opacity = int(self._opacity*change)
