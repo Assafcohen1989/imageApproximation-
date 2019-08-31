@@ -110,9 +110,9 @@ class Population(object):
             # Mutate the selected genes
             for gene in genes_to_mutate:
                 if divergence:  # No improvement was made in the previous generation so a stronger mutation is tried
-                    gene.mutate(num_of_mutations=randrange(1, 6), step=0.8)
+                    gene.mutate(num_of_mutations=randrange(2, 6), step=0.8)
                 else:
-                    gene.mutate(num_of_mutations=1, step=0.5)
+                    gene.mutate(num_of_mutations=2, step=0.5)
 
     def breed(self, time_limit_in_minuets=5):
         percentage_of_chromosomes_to_change = 0.65

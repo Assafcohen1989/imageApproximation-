@@ -62,42 +62,52 @@ class Gene(object):
         choices = np.random.choice(['radius', 'x', 'y', 'color', 'opacity'],
                                    num_of_mutations,
                                    p=[p_radius, p_x, p_y, p_color, p_opacity])
-        change = uniform(-step, step)
         for choice in choices:
-            for _ in range(5):  # 5 chances are give to mutate in the 'legal' range, otherwise mutation is skipped
-                if choice == 'radius':
-                    new_r = int(self._radius*change)
-                    if 0 <= self._radius + new_r <= min(self._frame_limit[0], self._frame_limit[1]):
-                        self._radius += int(self._radius*change)
-                        break
+            if choice == 'radius':
+                change = uniform(-step, step)
+                new_r = int(self._radius*change)
+                while not 0 <= self._radius + new_r <= min(self._frame_limit[0], self._frame_limit[1]):
+                    change = uniform(-step, step)
+                    new_r = int(self._radius * change)
+                self._radius += new_r
+                break
 
-                elif choice == 'x':
-                    new_x = int(self._x*change)
-                    if 0 <= self._x + new_x <= self._frame_limit[0]:
-                        self._x += new_x
-                        break
+            elif choice == 'x':
+                change = uniform(-step, step)
+                new_x = int(self._x*change)
+                while not 0 <= self._x + new_x <= self._frame_limit[0]:
+                    change = uniform(-step, step)
+                    new_x = int(self._x * change)
+                self._x += new_x
+                break
 
-                elif choice == 'y':
+            elif choice == 'y':
+                change = uniform(-step, step)
+                new_y = int(self._y * change)
+                while not 0 <= self._y + new_y <= self._frame_limit[1]:
+                    change = uniform(-step, step)
                     new_y = int(self._y * change)
-                    if 0 <= self._y + new_y <= self._frame_limit[1]:
-                        self._y += new_y
-                        break
+                self._y += new_y
+                break
 
-                elif choice == 'color':
-                    for channel in [0, 1, 2]:
-                        new_color = int(self._color[channel]*change)
-                        if new_color <= 0:
-                            new_color = 0
-                        elif new_color > 255:
-                            new_color = 255
-                        loc = list(self._color)
-                        loc[channel] = new_color
-                        self._color = tuple(loc)
-                    break
+            elif choice == 'color':
+                for channel in [0, 1, 2]:
+                    change = uniform(-step, step)
+                    new_color = int(self._color[channel]*change)
+                    while not 0 <= new_color <= 255:
+                        change = uniform(-step, step)
+                        new_color = int(self._color[channel] * change)
+                    loc = list(self._color)
+                    loc[channel] = new_color
+                    self._color = tuple(loc)
+                break
 
-                else:
-                    new_opacity = int(self._opacity*change)
-                    if 0 <= self._opacity + new_opacity <= 100:
-                        self._opacity += new_opacity
-                        break
+            else:
+                change = uniform(-step, step)
+                new_opacity = int(self._opacity*change)
+                while not 0 <= self._opacity + new_opacity <= 100:
+                    change = uniform(-step, step)
+                    new_opacity = int(self._opacity * change)
+                self._opacity += new_opacity
+                break
 
