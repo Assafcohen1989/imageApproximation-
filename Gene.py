@@ -36,6 +36,7 @@ class Gene(object):
                        color=self._color,
                        thickness=-1
                        )
+        
         else:  # use_opacity = True
             overlay = np.zeros((self._frame_limit[0], self._frame_limit[1], 3), np.uint8)
             cv2.circle(img=overlay,
@@ -47,8 +48,8 @@ class Gene(object):
             opacity = self._opacity/100
             cv2.addWeighted(_img, 1, overlay, opacity, 0, _img)
 
-        show_waited = False
-        if show_waited:
+        show_weighted = False
+        if show_weighted:
             # Show the results
             cv2.imshow('gene', _img)
             cv2.waitKey(0)
@@ -83,13 +84,16 @@ class Gene(object):
                         break
 
                 elif choice == 'color':
-                    channel = randrange(3)
-                    new_color = int(self._color[channel]*change)
-                    if 0 <= new_color <= 255:
+                    for channel in [0, 1, 2]:
+                        new_color = int(self._color[channel]*change)
+                        if new_color <= 0:
+                            new_color = 0
+                        elif new_color > 255:
+                            new_color = 255
                         loc = list(self._color)
                         loc[channel] = new_color
                         self._color = tuple(loc)
-                        break
+                    break
 
                 else:
                     new_opacity = int(self._opacity*change)

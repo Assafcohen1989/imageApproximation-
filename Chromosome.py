@@ -50,10 +50,10 @@ class Chromosome(object):
                 gene = self.get_random_genes(num_of_genes=1)
                 self._genes.append(gene[0].copy())
             else:
-                new_gene = sample(parents[0].get_random_genes(num_of_genes=1) + parents[1].get_random_genes(num_of_genes=1), k=1)
+                new_gene = sample(parents[0].get_random_genes(num_of_genes=1) + parents[1].get_random_genes(num_of_genes=1), k=1)[0]
                 while new_gene in self._genes:
-                    new_gene = sample(parents[0].get_random_genes(num_of_genes=1) + parents[1].get_random_genes(num_of_genes=1), k=1)
-                self._genes.append(new_gene[0])
+                    new_gene = sample(parents[0].get_random_genes(num_of_genes=1) + parents[1].get_random_genes(num_of_genes=1), k=1)[0]
+                self._genes.append(new_gene.copy())
 
     def get_fitness(self, use_opacity=True):
         """
@@ -78,15 +78,14 @@ class Chromosome(object):
     def generate_chromosome_image(self, use_opacity=True):
         img = np.zeros((self._img.shape[:2][0], self._img.shape[:2][1], 3), np.uint8)
         for gene in self._genes:
-            if type(gene) == list:
-                print("STOP")
             gene.draw_gene(img, use_opacity=use_opacity)
         return img
 
     def draw_chromosome(self, use_opacity=True, hold=False):
         img = self.generate_chromosome_image(use_opacity=use_opacity)
         # Show the results
-        cv2.imshow('gene', img)
+        vis = np.concatenate((img, self._img), axis=1)
+        cv2.imshow('gene', vis)
         if hold:
             cv2.waitKey(0)
         else:

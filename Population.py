@@ -4,8 +4,6 @@ import os
 import time
 from argparse import ArgumentParser
 from random import randrange, sample, uniform
-import signal
-from contextlib import contextmanager
 
 from Chromosome import Chromosome
 
@@ -86,9 +84,11 @@ class Population(object):
 
             # Growing step:
             if chromosome.get_size() < chromosome.get_limit():  # chromosome is growing
-                chance = uniform(0, 1)
+                chromosome.add_random_gene()
+                #chance = uniform(0, 1)
+                chance = -1
 
-                if 0 < chance <= 0.5:  # Adding a completely random gene
+                if 0 <= chance <= 0.5:  # Adding a completely random gene
                     chromosome.add_random_gene()
                     if divergence:  # No improvement was made in the previous generation so a larger change is given
                         chromosome.add_random_gene()  # Adding a completely random gene
@@ -110,9 +110,9 @@ class Population(object):
             # Mutate the selected genes
             for gene in genes_to_mutate:
                 if divergence:  # No improvement was made in the previous generation so a stronger mutation is tried
-                    gene.mutate(num_of_mutations=randrange(1, 2), step=0.5)
+                    gene.mutate(num_of_mutations=randrange(1, 6), step=0.8)
                 else:
-                    gene.mutate(num_of_mutations=1, step=0.35)
+                    gene.mutate(num_of_mutations=1, step=0.5)
 
     def breed(self, time_limit_in_minuets=5):
         percentage_of_chromosomes_to_change = 0.65
@@ -144,7 +144,7 @@ class Population(object):
             generation_counter += 1
 
             end_time = time.time()
-            if end_time - start_time > time_limit_in_minuets * 60:
+            if end_time - start_time >= time_limit_in_minuets * 60:
                 print("Reached time limit of {0} minuets.".format(time_limit_in_minuets))
                 break
 
@@ -177,7 +177,7 @@ def main():
     now = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
     if not os.path.exists("./Results"):
         os.makedirs("./Results")
-    cv2.imwrite("./Results/result_" + now + ".jpg", img)
+    cv2.imwrite("./Results/result_" + now + "_" + str(timeout) + "min.jpg", img)
     print("Result image was saved to {0}.".format("./Results/result_" + now + ".jpg"))
 
 
