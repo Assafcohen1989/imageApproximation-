@@ -42,6 +42,8 @@ class Population(object):
             chromosome['score'] = chromosome['chromosome'].get_fitness(use_opacity=use_opacity)
 
     def _selection(self, size=2):
+        if size < 2:
+            raise Exception("Size must be at least 2 parents")
         self._calculate_scores(use_opacity=True)
         parents = sorted(self._chromosomes, key=lambda x: x['score'], reverse=False)
         print("Parent1({2},{4}) score: {0}, Parent2({3},{5}) score: {1}".format(parents[0]['score'], parents[1]['score'],
@@ -52,33 +54,38 @@ class Population(object):
     def _crossover(self, parents=None, number_of_offsprings=50, p_grow=0.5):
         if parents is None:
             raise Exception("Skipped selection stage.\nNo parents were selected.")
+        number_parents = len(parents)
+        offsprings = []
+        for parent in parents:
+            offsprings.append(parent)
 
-        parent_1 = parents[0]
-        parent_2 = parents[1]
-        offsprings = [parent_1, parent_2]
-
-        for _ in range(number_of_offsprings-2):
+        for _ in range(number_of_offsprings-number_parents):
             grow = 0
             if uniform(0, 1) <= p_grow:
-                grow = randrange(1, 4)
-            half_of_parent_1 = parent_1.get_random_genes(num_of_genes=int(parent_1.get_size()/2) + grow)
-            half_of_parent_2 = parent_2.get_random_genes(num_of_genes=int(parent_2.get_size()/2))
+                grow = randrange(1, 2)
+            gene_pool = []
+            for parent in parents:
+                number_of_genes_from_parent = max(int(parent.get_size() / number_parents), 1)
+                gene_pool += parent.get_random_genes(num_of_genes=number_of_genes_from_parent + grow)
+
             son = Chromosome(
                     genes=[],
                     genes_limit=100,
                     image=self._img)
-
-            son.set_genes_from_list(half_of_parent_1 + half_of_parent_2)
+            son.set_genes_from_list(gene_pool)
             offsprings.append(son)
 
         return offsprings
 
-    def _mutate(self, chromosomes=None, p_chromosomes_to_change=0.2, divergence=False):
+    def _mutate(self, chromosomes=None, num_of_parents=2, p_chromosomes_to_change=0.2, divergence=False):
         if chromosomes is None:
             chromosomes = self._chromosomes
 
+        if divergence:
+            p_chromosomes_to_change = min(p_chromosomes_to_change * 2, 1)
+
         # Choosing a random number of chromosomes to mutate (excluding the parents)
-        chromosomes_to_mutate = sample(chromosomes[2:], k=int((len(chromosomes) - 2) * p_chromosomes_to_change))
+        chromosomes_to_mutate = sample(chromosomes[num_of_parents:], k=int((len(chromosomes) - num_of_parents) * p_chromosomes_to_change))
 
         for chromosome in chromosomes_to_mutate:
 
@@ -112,34 +119,36 @@ class Population(object):
             # Mutate the selected genes
             for gene in genes_to_mutate:
                 if divergence:  # No improvement was made in the previous generation so a stronger mutation is tried
-                    gene.mutate(num_of_mutations=randrange(2, 6), step=0.75)
+                    gene.mutate(num_of_mutations=randrange(2, 4), step=0.5)
                 else:
-                    gene.mutate(num_of_mutations=2, step=0.5)
+                    gene.mutate(num_of_mutations=1, step=0.3)
 
     def breed(self, time_limit_in_minuets=5):
-        percentage_of_chromosomes_to_change = 0.65
+        percentage_of_chromosomes_to_change = 0.3
         chance_to_grow_for_each_offspring = 0.5
         number_of_offsprings_for_each_generation = 100
+        number_of_parents = 10
 
         start_time = time.time()
-        last_parents = self._selection()
+        last_parents = self._selection(size=number_of_parents)
         generation_counter = 0
         while True:
-            parents = self._selection()
+            parents = self._selection(size=number_of_parents)
 
             if generation_counter % 10 == 0:
                 parents[0]['chromosome'].draw_chromosome(use_opacity=True)
             print("Iteration: {0}".format(generation_counter))
 
             divergence_flag = False
-            if parents == last_parents:
+            if parents[:2] == last_parents[:2]:
+                print("Stuck.")
                 divergence_flag = True
 
             # Create offsprings:
             offsprings = self._crossover(parents=[p['chromosome'] for p in parents], number_of_offsprings=number_of_offsprings_for_each_generation, p_grow=chance_to_grow_for_each_offspring)
 
             # Insert mutations to the offsprings:
-            self._mutate(offsprings, p_chromosomes_to_change=percentage_of_chromosomes_to_change, divergence=divergence_flag)
+            self._mutate(offsprings, number_of_parents, p_chromosomes_to_change=percentage_of_chromosomes_to_change, divergence=divergence_flag)
 
             # Create a new generation:
             self._chromosomes = [{'chromosome': offspring, 'score': 0} for offspring in offsprings]
